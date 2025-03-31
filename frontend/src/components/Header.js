@@ -1,38 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
     AppBar,
-    Box,
     Toolbar,
     Typography,
     Button,
-    Container,
-    IconButton,
+    Box,
     Menu,
     MenuItem,
-    useScrollTrigger,
-    useTheme,
-    useMediaQuery
+    IconButton,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-
-const MENU_ITEMS = [
-    { label: 'Vocabulary', path: '/vocabulary' },
-    { label: 'Kanji', path: '/kanji' },
-    { label: 'Exercises', path: '/exercises' },
-    { label: 'Forcise', path: '/forcise' },
-    { label: 'Forum', path: '/forum' }
-];
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-    const trigger = useScrollTrigger({
-        disableHysteresis: true,
-        threshold: 100,
-    });
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [anchorEl, setAnchorEl] = React.useState(null);
 
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
@@ -42,99 +26,114 @@ const Header = () => {
         setAnchorEl(null);
     };
 
-    return (
-        <AppBar
-            position="fixed"
-            color="inherit"
-            elevation={trigger ? 4 : 0}
-            sx={{
-                backgroundColor: trigger ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
-                backdropFilter: trigger ? 'blur(8px)' : 'none',
-                transition: 'all 0.3s',
-            }}
-        >
-            <Container maxWidth="lg">
-                <Toolbar disableGutters>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                        <Typography
-                            variant="h6"
-                            component={Link}
-                            to="/"
-                            sx={{
-                                fontWeight: 700,
-                                color: theme.palette.primary.main,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                textDecoration: 'none'
-                            }}
-                        >
-                            <img
-                                src="/avocado-icon.png"
-                                alt="Avocadomo"
-                                style={{ height: 32, width: 'auto' }}
-                            />
-                            Avocadomo
-                        </Typography>
-                    </Box>
+    const handleLogout = () => {
+        logout();
+        handleClose();
+        navigate('/');
+    };
 
-                    {isMobile ? (
-                        <>
-                            <IconButton
-                                size="large"
-                                edge="end"
-                                color="primary"
-                                aria-label="menu"
-                                onClick={handleMenu}
+    const handleProfile = () => {
+        handleClose();
+        navigate('/profile');
+    };
+
+    return (
+        <AppBar position="static" sx={{ backgroundColor: '#4CAF50' }}>
+            <Toolbar>
+                <Typography
+                    component={RouterLink}
+                    to="/"
+                    variant="h6"
+                    sx={{
+                        flexGrow: 1,
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        fontWeight: 'bold',
+                    }}
+                >
+                    Avocadomo
+                </Typography>
+
+                {user ? (
+                    <>
+                        <Box sx={{ display: 'flex', gap: 2, mr: 2 }}>
+                            <Button
+                                color="inherit"
+                                component={RouterLink}
+                                to="/vocabulary"
                             >
-                                <MenuIcon />
-                            </IconButton>
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={handleClose}
-                                anchorOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
+                                Từ vựng
+                            </Button>
+                            <Button
+                                color="inherit"
+                                component={RouterLink}
+                                to="/kanji"
                             >
-                                {MENU_ITEMS.map((item) => (
-                                    <MenuItem
-                                        key={item.label}
-                                        onClick={handleClose}
-                                        component={Link}
-                                        to={item.path}
-                                    >
-                                        {item.label}
-                                    </MenuItem>
-                                ))}
-                            </Menu>
-                        </>
-                    ) : (
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            {MENU_ITEMS.map((item) => (
-                                <Button
-                                    key={item.label}
-                                    color="inherit"
-                                    component={Link}
-                                    to={item.path}
-                                    sx={{
-                                        '&:hover': {
-                                            color: theme.palette.primary.main,
-                                        },
-                                    }}
-                                >
-                                    {item.label}
-                                </Button>
-                            ))}
+                                Kanji
+                            </Button>
+                            <Button
+                                color="inherit"
+                                component={RouterLink}
+                                to="/exercises"
+                            >
+                                Bài tập
+                            </Button>
+                            <Button
+                                color="inherit"
+                                component={RouterLink}
+                                to="/forum"
+                            >
+                                Diễn đàn
+                            </Button>
                         </Box>
-                    )}
-                </Toolbar>
-            </Container>
+                        <IconButton
+                            size="large"
+                            aria-label="account of current user"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleMenu}
+                            color="inherit"
+                        >
+                            <AccountCircle />
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            keepMounted
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
+                        >
+                            <MenuItem onClick={handleProfile}>Hồ sơ</MenuItem>
+                            <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+                        </Menu>
+                    </>
+                ) : (
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            color="inherit"
+                            component={RouterLink}
+                            to="/login"
+                        >
+                            Đăng nhập
+                        </Button>
+                        <Button
+                            color="inherit"
+                            component={RouterLink}
+                            to="/signup"
+                        >
+                            Đăng ký
+                        </Button>
+                    </Box>
+                )}
+            </Toolbar>
         </AppBar>
     );
 };

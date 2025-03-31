@@ -1,6 +1,7 @@
 import React from 'react';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
+import Signup from '../pages/Signup';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { ROLES } from '../contexts/AuthContext';
 
@@ -17,53 +18,35 @@ const TeacherDashboard = () => <div>Teacher Dashboard</div>;
 const routes = [
     {
         path: '/',
-        element: Home,
+        element: <Home />
     },
     {
         path: '/login',
-        element: Login,
+        element: <Login />
+    },
+    {
+        path: '/signup',
+        element: <Signup />
     },
     {
         path: '/vocabulary',
-        element: VocabularyPage,
-        protected: true,
-        roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]
+        element: <ProtectedRoute element={<div>Vocabulary Page</div>} requiredRoles={[ROLES.STUDENT, ROLES.TEACHER]} />
     },
     {
         path: '/kanji',
-        element: KanjiPage,
-        protected: true,
-        roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]
+        element: <ProtectedRoute element={<div>Kanji Page</div>} requiredRoles={[ROLES.STUDENT, ROLES.TEACHER]} />
     },
     {
         path: '/exercises',
-        element: ExercisesPage,
-        protected: true,
-        roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]
-    },
-    {
-        path: '/forcise',
-        element: ForcisePage,
-        protected: true,
-        roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]
+        element: <ProtectedRoute element={<div>Exercises Page</div>} requiredRoles={[ROLES.STUDENT, ROLES.TEACHER]} />
     },
     {
         path: '/forum',
-        element: ForumPage,
-        protected: true,
-        roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]
+        element: <ProtectedRoute element={<div>Forum Page</div>} requiredRoles={[ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN]} />
     },
     {
         path: '/admin',
-        element: AdminDashboard,
-        protected: true,
-        roles: [ROLES.ADMIN]
-    },
-    {
-        path: '/teacher',
-        element: TeacherDashboard,
-        protected: true,
-        roles: [ROLES.TEACHER, ROLES.ADMIN]
+        element: <ProtectedRoute element={<div>Admin Dashboard</div>} requiredRoles={ROLES.ADMIN} />
     }
 ];
 

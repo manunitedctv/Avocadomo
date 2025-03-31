@@ -1,38 +1,42 @@
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import createAppTheme from './theme';
-import routes from './routes/routes';
-import ErrorBoundary from './components/ErrorBoundary';
+import { routes } from './routes';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const [mode, setMode] = useState('light');
 
   const theme = useMemo(() => createAppTheme(mode), [mode]);
 
-  const toggleColorMode = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ErrorBoundary>
-        <AuthProvider>
-          <Router>
-            <Routes>
-              {routes.map((route) => (
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {routes.map((route, index) => {
+              const { path, element, protected: isProtected, roles } = route;
+              return (
                 <Route
-                  key={route.path}
-                  path={route.path}
-                  element={<route.element colorMode={{ mode, toggleColorMode }} />}
+                  key={index}
+                  path={path}
+                  element={
+                    isProtected ? (
+                      <ProtectedRoute element={element} requiredRoles={roles} />
+                    ) : (
+                      element
+                    )
+                  }
                 />
-              ))}
-            </Routes>
-          </Router>
-        </AuthProvider>
-      </ErrorBoundary>
+              );
+            })}
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

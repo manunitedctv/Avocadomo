@@ -1,27 +1,25 @@
 import React from 'react';
-import { Box, Container, ThemeProvider } from '@mui/material';
+import { Box } from '@mui/material';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
 import CTA from '../components/CTA';
 import Footer from '../components/Footer';
-import theme from '../theme/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
+    const { user } = useAuth();
+
     return (
-        <ThemeProvider theme={theme}>
-            <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Header />
-                <Box component="main" sx={{ flexGrow: 1, mt: { xs: 7, md: 8 } }}>
-                    <Container maxWidth="lg">
-                        <Hero />
-                        <Features />
-                        <CTA />
-                    </Container>
-                </Box>
-                <Footer />
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            <Box component="main" sx={{ flexGrow: 1 }}>
+                <Hero />
+                <Features />
+                {!user && <CTA />}
             </Box>
-        </ThemeProvider>
+            <Footer />
+        </Box>
     );
 };
 

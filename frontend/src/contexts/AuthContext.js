@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
+
+export const useAuth = () => {
+    return useContext(AuthContext);
+};
 
 export const ROLES = {
     ADMIN: 'ADMIN',
@@ -9,144 +14,97 @@ export const ROLES = {
     GUEST: 'GUEST'
 };
 
+// Cấu hình axios
+axios.defaults.baseURL = 'http://localhost:8081/api';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    // Load user from localStorage on mount
     useEffect(() => {
-        const loadUser = async () => {
-            try {
-                const token = localStorage.getItem('accessToken');
-                const refreshToken = localStorage.getItem('refreshToken');
-
-                if (!token || !refreshToken) {
-                    setLoading(false);
-                    return;
-                }
-
-                // Validate token and get user data
-                const response = await fetch('/api/auth/validate', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    setUser(userData);
-                } else if (response.status === 401) {
-                    // Token expired, try refresh
-                    await refreshAccessToken();
-                }
-            } catch (err) {
-                console.error('Auth load error:', err);
-                setError('Failed to load user session');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadUser();
+        const token = localStorage.getItem('token');
+        if (token) {
+            validateToken(token);
+        } else {
+            setLoading(false);
+        }
     }, []);
 
-    const refreshAccessToken = async () => {
+    const validateToken = async (token) => {
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) {
-                throw new Error('No refresh token available');
-            }
-
-            const response = await fetch('/api/auth/refresh', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refreshToken }),
+            const response = await axios.get('/auth/validate', {
+                headers: { Authorization: `Bearer ${token}` }
             });
-
-            if (response.ok) {
-                const { accessToken, user: userData } = await response.json();
-                localStorage.setItem('accessToken', accessToken);
-                setUser(userData);
-                return true;
-            }
-            return false;
-        } catch (err) {
-            console.error('Token refresh error:', err);
-            return false;
+            setUser(response.data);
+        } catch (error) {
+            localStorage.removeItem('token');
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const login = async (credentials) => {
+    const login = async (email, password) => {
         try {
-            setError(null);
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(credentials),
+            const response = await axios.post('/auth/login', {
+                email,
+                password
             });
+            const { token, user } = response.data;
+            localStorage.setItem('token', token);
+            setUser(user);
+            return user;
+        } catch (error) {
+            console.error('Login error:', error.response?.data || error.message);
+            throw new Error(error.response?.data?.message || 'Đăng nhập thất bại');
+        }
+    };
 
-            const data = await response.json();
-
-            if (response.ok) {
-                const { accessToken, refreshToken, user: userData } = data;
-                localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', refreshToken);
-                setUser(userData);
-                return { success: true };
-            } else {
-                setError(data.message || 'Login failed');
-                return { success: false, error: data.message };
-            }
-        } catch (err) {
-            console.error('Login error:', err);
-            setError('An error occurred during login');
-            return { success: false, error: 'Login failed' };
+    const signup = async (email, password, userData) => {
+        try {
+            console.log('Signup data:', { email, password, ...userData });
+            const response = await axios.post('/auth/register', {
+                email,
+                password,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                role: ROLES.STUDENT // Mặc định role là STUDENT khi đăng ký
+            });
+            console.log('Signup response:', response.data);
+            const { token, user } = response.data;
+            localStorage.setItem('token', token);
+            setUser(user);
+            return user;
+        } catch (error) {
+            console.error('Signup error:', error.response?.data || error.message);
+            throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
         }
     };
 
     const logout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('token');
         setUser(null);
     };
 
-    const hasRole = (requiredRoles) => {
+    const hasRole = (roles) => {
         if (!user) return false;
-        if (!requiredRoles || requiredRoles.length === 0) return true;
-        return requiredRoles.includes(user.role);
+        return roles.includes(user.role);
     };
 
     const value = {
         user,
         loading,
-        error,
+        isAuthenticated: !!user,
         login,
+        signup,
         logout,
-        hasRole,
-        refreshAccessToken
+        hasRole
     };
-
-    if (loading) {
-        // You can replace this with a loading spinner component
-        return <div>Loading...</div>;
-    }
 
     return (
         <AuthContext.Provider value={value}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 }; 

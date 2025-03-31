@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
     Box,
     Container,
@@ -59,6 +60,8 @@ const CTA = () => {
                             }}
                         >
                             <Button
+                                component={RouterLink}
+                                to="/signup"
                                 variant="contained"
                                 size="large"
                                 sx={{
